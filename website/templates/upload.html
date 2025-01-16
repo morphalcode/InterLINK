@@ -1,0 +1,111 @@
+{% extends "home.html" %}
+{% block title %}{{ name }}{% endblock %}
+{% block content %}
+<div class="container mt-5">
+  <form method="POST" enctype="multipart/form-data">
+    <div class="row">
+      <div class="col-md-6">
+        <h1>Upload Contacts</h1>
+      </div>  
+      <div class="col-md-6 text-right">
+        <div class="input-group justify-content-end">
+          <select class="form-select" id="upload_type" name="upload_type" onchange="document.location.href='upload?upload_type='+this.value">
+            <option
+              value=""
+              selected
+              disabled>
+              Select an upload type
+            </option>
+            <option
+              value="linkedin">
+              LinkedIn Connections
+            </option>
+            <option
+              value="google"
+              {% if upload_type == "google" %}
+              selected
+              {% endif %}>
+              Google Contacts
+            </option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </form>
+  <br />
+  <form method="POST" enctype="multipart/form-data">
+    <div class="row">
+      <div class="col-md-9">
+        <p id="description">Select an upload type to begin.</p>
+      </div>
+      <div class="col-md-3">
+        <div class="custom-file">
+          <label class="custom-file-label" for="contacts_file">Choose CSV file</label>
+          <input
+            type="file"
+            class="custom-file-input"
+            id="contacts_file"
+            name="contacts_file"
+            accept=".csv"
+            required
+          />
+        </div>
+        <div class="form-check mt-2">
+          <input
+            class="form-check-input"
+            type="checkbox"
+            value="checked"
+            id="all_public"
+            name="all_public"
+          />
+          <label class="form-check-label" for="all_public">
+            Make all public
+          </label>
+        </div>
+        <div class="form-check">
+          <input
+            class="form-check-input"
+            type="checkbox"
+            value="checked"
+            id="all_autofill"
+            name="all_autofill"
+          />
+          <label class="form-check-label" for="all_autofill">
+            Auto-fill all
+          </label>
+        </div>
+        <button type="submit" class="btn btn-primary mt-2" name="uploadFileButton">
+          Submit
+        </button>
+      </div>
+    </div>
+  </form>
+</div>
+<script>
+  var urlParams = new URLSearchParams(window.location.search);
+  let queryString = urlParams.get('upload_type');
+
+  document.getElementById("upload_type").querySelector("option[value='" + queryString + "']").selected = true;
+
+  if (queryString == "linkedin" ){
+    document.getElementById("description").innerHTML = 'To export LinkedIn connections:<br /><br />1. Click the <b><i class="fa fa-user-circle-o"></i> Me</b> icon at the top of your LinkedIn homepage. <br />2. Select <b>Settings & Privacy</b> from the dropdown. <br />3. Click <b>Data privacy</b> on the left pane. <br />4.Under the <b>How LinkedIn uses your data</b> section, click <b>Get a copy of your data</b>. <br />5. Select <b>Want something in particular? Select the data files you\'re most interested in</b>. <br />6. Select <b>Connections</b>. <br />7. Click <b>Request archive</b>.<br />8. Enter your password and click <b>Done</b>.<br /><br />You\'ll receive an email to your <b>Primary Email address</b> which will include a link where you can download your list of connections.';
+  }
+  else if (queryString == "google"){
+    document.getElementById("description").innerHTML = 'To export Google contacts:<br /><br />1. Select one of the following:<br />&emsp;- <b>A single contact:</b> Check the box next to the contact name.<br />&emsp;- <b>Multiple contacts:</b> Check the boxes next to all the contacts you want to export.<br />&emsp;- <b>All contacts:</b> Check the box next to any contact and in the top left, click <b>Selection Actions</b> and then <b>All</b>.<br />2. At the top right, click <b><i class="fa fa-ellipsis-v"></i> More actions</b> and then <b>Export</b>.<br />3. To back up your contacts, select <b>Google CSV</b>.<br />4. To save your file, click <b>Export</b>.<br /><br /><b>Tip:</b> If you use Google Contacts for work or school, you can’t select all contacts in the Directory.';
+  }
+
+  let basicDetails = document.querySelector("#basicDetails");
+  let changesMade = false;
+
+  basicDetails.oninput = () => {
+    changesMade = true;
+  };
+
+  window.addEventListener("beforeunload", function (e) {
+    if (changesMade) {
+      e.preventDefault();
+      e.returnValue = "";
+    }
+  });
+</script>
+{% endblock %}

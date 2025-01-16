@@ -1,0 +1,90 @@
+{% extends "home.html" %} {% block title %}{{name}}{% endblock %}# {% block
+content %}
+<style>
+  .user-photo {
+    width: 300px;
+    height: 300px;
+    border: 2px solid #ccc;
+    background-size: cover;
+    background-position: center;
+    cursor: pointer;
+    object-fit: cover;
+    border-radius: 10px;
+  }
+</style>
+<div class="container mt-5">
+  <h1>Account Information</h1>
+  <br />
+  <form method="POST" enctype="multipart/form-data" class="row">
+    <div class="col-md-4">
+      <img
+        src="data:image/png;base64,{{ user.profile_picture | encode_b64 }}"
+        class="user-photo"
+        alt="Profile Picture" />
+      <input
+        type="file"
+        id="profilePicture"
+        name="profilePicture"
+        accept="image/*" />
+    </div>
+    <div class="col-md-4">
+      <div class="mb-3">
+        <label for="firstName" class="form-label">First Name:</label>
+        <input
+          type="text"
+          class="form-control"
+          id="firstName"
+          name="firstName"
+          value="{{ user.first_name }}" />
+      </div>
+      <div class="mb-3">
+        <label for="emailAddress" class="form-label">Email Address:</label>
+        <div class="input-group">
+          <input
+            type="email"
+            class="form-control"
+            id="emailAddress"
+            name="emailAddress"
+            value="{{ user.email_address }}"
+            readonly />
+          <div class="input-group-append"></div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="mb-3">
+        <label for="lastName" class="form-label">Last Name:</label>
+        <input
+          type="text"
+          class="form-control"
+          id="lastName"
+          name="lastName"
+          value="{{ user.last_name }}" />
+      </div>
+      <div class="mb-3">
+        <!-- <label for="phoneNumber" class="form-label">Phone Number</label>
+        <input
+          type="tel"
+          class="form-control"
+          id="phoneNumber"
+          name="phoneNumber"
+          value="{{ user.phone_number }}" /> -->
+        <label for="changePassword" class="form-label">Password:</label>
+        <a
+          name="changePassword"
+          href="{{url_for('views.change_password')}}"
+          class="btn btn-danger btn-block"
+          >Change password</a
+        >
+      </div>
+    </div>
+    <button
+      type="submit"
+      class="btn btn-primary"
+      style="position: absolute; bottom: 10px; right: 10px"
+      name="saveButton">
+      Save
+    </button>
+  </form>
+</div>
+{% endblock %}

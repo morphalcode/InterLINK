@@ -1,4 +1,243 @@
-{% extends "base.html" %} {% block title %}Home{% endblock %}# {% block content
-%}
-<h1>This is the home page</h1>
+{% extends "base.html" %} {% block title %}{{name}}{% endblock %}# {% block
+content %}
+<style>
+  .user-photo {
+    width: 300px;
+    height: 300px;
+    border: 2px solid #ccc;
+    background-size: cover;
+    background-position: center;
+    cursor: pointer;
+  }
+</style>
+
+<br />
+<h1>Good {{period}}, {{user.first_name}}</h1>
+<br />
+<form method="POST">
+  <div class="row">
+    <div class="col-md-8">
+      <div class="input-group">
+        <input
+          type="search"
+          id="search"
+          class="form-control"
+          name="search_query"
+          placeholder="Search all"
+          {% if search_query %}
+          value="{{search_query}}"
+          {% endif %}/>
+        <div class="input-group-append">
+          <button id="search-button" type="submit" class="btn btn-primary">
+            <i class="fa fa-search"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4 text-right">
+      <button
+        id="filter-button"
+        type="button"
+        class="btn btn-primary"
+        data-toggle="modal"
+        data-target="#filterModal">
+        <i class="fa fa-filter"></i>
+        Filter By...
+      </button>
+      <a
+        href="{{ url_for('views.edit_contact', contact_id=None) }}"
+        class="btn btn-primary">
+        <i class="fa fa-plus"></i> Add Contact
+      </a>
+    </div>
+  </div>
+</form>
+<form method="POST">
+<div class="modal fade" id="filterModal" tabindex="-1" role="dialog" aria-labelledby="filterModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="filterModalLabel">Filter Options</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="filterType">Filter by:</label>
+          <select class="form-control" id="filterType" name="filter_type">
+            <option value="location">Location</option>
+            <option value="job_title">Job Title</option>
+            <option value="institution">Institution</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="filterInput">Filter value:</label>
+          <input type="text" class="form-control" id="filterInput" name="filter_input" />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">
+          Close
+        </button>
+        <button type="submit" class="btn btn-primary" name="filterButton">Apply Filter</button>
+      </div>
+    </div>
+    
+  </div>
+</div>
+</form>
+
+<br />
+<table class="table table-sortable">
+  <col style="width: 15%" />
+  <col style="width: 25%" />
+  <col style="width: 25%" />
+  <col style="width: 25%" />
+  <col style="width: 5%" />
+  <col style="width: 5%" />
+  <thead>
+    <tr>
+      <th>PFP</th>
+      <th>
+        <a
+          style="color: black"
+          href="{{ url_for('views.home', sort_by='first_name', sort_order=(sort_order =='asc' and 'desc' or 'asc')) }}">
+          First name {% if sort_by == 'first_name' %}{% if sort_order == 'asc'
+          %}▲{% else %}▼{% endif %}{% endif %}
+        </a>
+      </th>
+      <th>
+        <a
+          style="color: black"
+          href="{{ url_for('views.home', sort_by='last_name', sort_order=(sort_order =='asc' and 'desc' or 'asc')) }}">
+          Last name {% if sort_by == 'last_name' %}{% if sort_order == 'asc'
+          %}▲{% else %}▼{% endif %}{% endif %}
+        </a>
+      </th>
+      <th>
+        <a
+          style="color: black"
+          href="{{ url_for('views.home', sort_by='email_address', sort_order=(sort_order =='asc' and 'desc' or 'asc')) }}">
+          Email address {% if sort_by == 'email_address' %}{% if sort_order ==
+          'asc' %}▲{% else %}▼{% endif %}{% endif %}
+        </a>
+      </th>
+      <th>Details</th>
+      <th>Delete</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for contact in contacts%}
+    <tr>
+      <td>
+        <div
+          style="
+            width: 40px;
+            height: 40px;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+          ">
+          <img
+            src="data:image/png;base64,{{ contact.profile_picture | encode_b64 }}"
+            style="
+              max-width: 100%;
+              max-height: 100%;
+              object-fit: cover;
+              border-radius: 4px;
+            " />
+        </div>
+      </td>
+      <td>{{contact.first_name}}</td>
+      <td>{{contact.last_name}}</td>
+      <td>{{contact.email_address}}</td>
+      <td>
+        <button
+          id="info_button"
+          type="button"
+          class="btn btn-primary"
+          data-toggle="modal"
+          data-target="#profileDetailsModal{{ contact.id }}">
+          <i class="fa fa-info-circle"></i>
+        </button>
+        <div class="modal fade" id="profileDetailsModal{{ contact.id }}" tabindex="-1" aria-labelledby="profileDetailsModalLabel" aria-hidden="true">
+          <div class="modal-dialog modal-lg">
+              <div class="modal-content">
+                  <div class="modal-header">
+                      <h5 class="modal-title">Contact Details</h5>
+                      <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                          <span aria-hidden="true">&times;</span>
+                      </button>
+                  </div>
+                  <div class="modal-body">
+                      <div class="container-fluid">
+                          <div class="row">
+                              <div class="col-md-6">
+                                  <div class="container">
+                                    <img src="data:image/png;base64,{{ contact.profile_picture | encode_b64 }}" class="user-photo img-fluid" style="height: 300px; object-fit: cover; border-radius: 10px;" alt="Profile Picture" />
+                                  </div>
+                                  <br>
+                                  <div class="form-group">
+                                    <label for="contact_notes">Contact Notes:</label>
+                                    <textarea class="form-control" id="contact_notes" name="contact_notes" rows="4" readonly>{{ contact.notes }}</textarea>
+                                  </div>
+                              </div>
+                              <div class="col-md-6">
+                                  <div class="form-group">
+                                      <label for="first_name">First Name:</label>
+                                      <input type="text" class="form-control" id="first_name" name="first_name" value="{{ contact.first_name }}" readonly />
+                                  </div>
+                                  <div class="form-group">
+                                      <label for="last_name">Last Name:</label>
+                                      <input type="text" class="form-control" id="last_name" name="last_name" value="{{ contact.last_name }}" readonly />
+                                  </div>
+                                  <div class="form-group">
+                                      <label for="email_address">Email Address:</label>
+                                      <input type="email" class="form-control" id="email_address" name="email_address" value="{{ contact.email_address }}" readonly />
+                                  </div>
+                                  <div class="form-group">
+                                      <label for="location">Location:</label>
+                                      <input type="text" class="form-control" id="location" name="location" value="{{ contact.location.name }}" readonly />
+                                  </div>
+                                  <div class="form-group">
+                                      <label for="phone_number">Phone Number:</label>
+                                      <input type="text" class="form-control" id="phone_number" name="phone_number" value="{{ contact.phone_number }}" readonly />
+                                  </div>
+                                  {% if contact.linkedin_account %}
+                                  <div class="form-group text-right">
+                                    <a href="{{ contact.linkedin_account }}" target="_blank"><i class="fa fa-linkedin"></i></a>
+                                  </div>
+                                  {% endif %}
+                              </div>
+                          </div>
+                      </div>
+                  </div>
+                  <div class="modal-footer">
+                    <a href="{{ url_for('views.edit_contact', contact_id=contact.id) }}" class="btn btn-primary">
+                      <i class="fa fa-edit"></i> Edit Institute
+                    </a>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                  </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </td>
+      <td>
+        <form
+          method="POST"
+          onsubmit="return confirm('Are you sure you want to PERMANENTLY delete {{ contact.first_name }} from your contacts?');">
+          <input type="hidden" name="delete_target" value="{{ contact.id }}" />
+          <button id="delete_button" type="submit" class="btn btn-danger">
+            <i class="fa fa-trash"></i>
+          </button>
+        </form>
+      </td>
+    </tr>
+  
+    {% endfor %}
+  </tbody>
+</table>
 {% endblock %}

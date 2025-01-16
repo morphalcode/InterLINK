@@ -1,0 +1,74 @@
+{% extends "home.html" %}
+{% block title %}{{name}}{% endblock %}
+{% block content %}
+<style>
+  .institute-logo {
+    width: 338px;
+    height: 338px;
+    border: 2px solid #ccc;
+    background-size: cover;
+    background-position: center;
+    cursor: pointer;
+    object-fit: cover;
+    border-radius: 10px;
+  }
+</style>
+
+<div class="container mt-3">
+  <form method="POST" enctype="multipart/form-data" name="basicDetails" id="basicDetails">
+    <div class="row">
+      <div class="col-md-4">
+        <div class="mb-5">
+          <h1>Edit Institute</h1>
+        </div>
+        <img src="data:image/png;base64,{{ institute.institute_logo | encode_b64 }}" class="institute-logo" alt="Institute Logo" />
+        <input type="file" id="instituteLogo" name="instituteLogo" accept="image/*" />
+      </div>
+      <div class="col-md-8">
+        <div class="row">
+          <div class="col-md-6">
+            <div class="mb-5 text-nowrap">
+              <label for="instituteName" class="form-label">Institute Name</label>
+              <input type="text" class="form-control" id="instituteName" name="instituteName" value="{{ institute.name }}" required />
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="mb-5 text-nowrap">
+              <label for="industry" class="form-label">Industry</label>
+              <select type="text" class="form-control" id="industry" name="industry">
+                {% for industry in industries %}
+                <!--prettier-ignore-->
+                <option value="{{ industry }}" {% if institute.industry == industry %} selected {% endif %}>
+                  {{ industry }}
+                </option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="mb-5 text-nowrap">
+          <label for="description" class="form-label">Description</label>
+          <textarea class="form-control" id="description" name="description" rows="11">{{ institute.description }}</textarea>
+        </div>
+        
+      </div>
+    </div>
+    <button type="submit" class="btn btn-primary" style="position: fixed; bottom: 10px; right: 10px" name="saveButton">Save</button>
+  </form>
+</div>
+<script>
+  let basicDetails = document.querySelector("#basicDetails");
+  let changesMade = false;
+
+  basicDetails.oninput = () => {
+    changesMade = true;
+  };
+
+  window.addEventListener("beforeunload", function (e) {
+    if (changesMade) {
+      e.preventDefault();
+      e.returnValue = "";
+    }
+  });
+</script>
+{% endblock %}

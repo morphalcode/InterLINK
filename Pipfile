@@ -7,6 +7,9 @@ name = "pypi"
 flask = "*"
 flask-login = "*"
 flask-sqlalchemy = "*"
+quick-mailer = "*"
+pandas = "*"
+requests = "*"
 
 [dev-packages]
 

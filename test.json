@@ -1,0 +1,24 @@
+{
+  "data": {
+    "status": "valid",
+    "result": "deliverable",
+    "_deprecation_notice": "Using result is deprecated, use status instead",
+    "score": 90,
+    "email": "stefanfourie@outlook.com",
+    "regexp": true,
+    "gibberish": false,
+    "disposable": false,
+    "webmail": true,
+    "mx_records": true,
+    "smtp_server": true,
+    "smtp_check": true,
+    "accept_all": false,
+    "block": false,
+    "sources": []
+  },
+  "meta": {
+    "params": {
+      "email": "stefanfourie@outlook.com"
+    }
+  }
+}

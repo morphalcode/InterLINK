@@ -1,0 +1,808 @@
+{% extends "home.html" %} {% block title %}{{name}}{% endblock %} {% block
+content %}
+<style>
+  .user-photo {
+    width: 338px;
+    height: 338px;
+    border: 2px solid #ccc;
+    background-size: cover;
+    background-position: center;
+    cursor: pointer;
+    object-fit: cover;
+    border-radius: 10px;
+  }
+
+  .logo {
+    width: 85px;
+    height: 85px;
+    background-size: cover;
+    background-position: center;
+    cursor: pointer;
+    object-fit: cover;
+    border-radius: 10px;
+  }
+</style>
+
+<div class="container mt-3">
+  <form method="POST" name="basicDetails" id="basicDetails" enctype="multipart/form-data">
+    <div class="row">
+      <div class="col-md-4">
+        <img
+          src="data:image/png;base64,{{ contact.profile_picture | encode_b64 }}"
+          class="user-photo"
+          alt="Profile Picture" />
+        <input
+          type="file"
+          id="profilePicture"
+          name="profilePicture"
+          accept="image/*" />
+      </div>
+      <div class="col-md-4">
+        <div class="mb-5 text-nowrap">
+          <h1>Edit Contact Information</h1>
+        </div>
+        <div class="mb-3">
+          <label for="firstName" class="form-label">First Name</label>
+          <input
+            type="text"
+            class="form-control"
+            id="firstName"
+            name="firstName"
+            value="{{ contact.first_name if contact.first_name and contact.email_address != 'nan' else '' }}" />
+        </div>
+        <div class="mb-3">
+          <label for="emailAddress" class="form-label">Email Address:</label>
+          <div class="input-group">
+            <input
+              type="email"
+              class="form-control"
+              id="emailAddress"
+              name="emailAddress"
+              value="{{ contact.email_address if contact.email_address and contact.email_address != 'nan' else '' }}" />
+            <div class="input-group-append">
+              <!-- prettier-ignore -->
+              <button
+                {% if contact.email_verified %}
+                disabled
+                {% endif %}
+                type="submit"
+                class="btn btn-info"
+                id="verifyEmailButton"
+                name="verifyEmailButton"
+                title="Verify the email address">
+                <i class="fa fa-magic"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="mb-3">
+          <label for="linkedinLink" class="form-label">LinkedIn Profile</label>
+          <input
+            type="text"
+            class="form-control"
+            id="linkedinLink"
+            name="linkedinLink"
+            pattern="http(s?)(:\/\/)((www.)?)(linkedin.com/in/)([a-zA-z0-9\-_]+)(/?)"
+            value="{{ contact.linkedin_account if contact.linkedin_account else '' }}" />
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="text-right mb-5">
+          <div class="checkbox h1">
+            <!-- prettier-ignore -->
+            <input
+              type="checkbox"
+              name="visibility"
+              data-toggle="toggle"
+              data-on="Public"
+              data-off="Private"
+              {% if contact.public %}
+              checked
+              {% endif %} />
+          </div>
+        </div>
+        <div class="mb-3">
+          <label for="lastName" class="form-label">Last Name</label>
+          <input
+            type="text"
+            class="form-control"
+            id="lastName"
+            name="lastName"
+            value="{{ contact.last_name if contact.last_name else '' }}" />
+        </div>
+        <div class="mb-3">
+          <label for="phoneNumber" class="form-label">Phone Number</label>
+          <input
+            type="tel"
+            class="form-control"
+            id="phoneNumber"
+            name="phoneNumber"
+            value="{{ contact.phone_number if contact.phone_number else '' }}" />
+        </div>
+        <div class="mb-3">
+          <label for="location" class="form-label">Location</label>
+          <input
+            type="text"
+            class="form-control"
+            id="location"
+            name="location"
+            value="{{ location_name }}" />
+        </div>
+      </div>
+      <button
+        type="submit"
+        class="btn btn-info"
+        style="position: fixed; bottom: 10px; right: 75px"
+        name="autofillButton">
+        Autofill
+      </button>
+      <button
+        type="submit"
+        class="btn btn-primary"
+        style="position: fixed; bottom: 10px; right: 10px"
+        name="saveButton">
+        Save
+      </button>
+    </div>
+    <div class="row">
+      <div class="col-md-12">
+        <div class="mb-3 mt-2">
+          <label for="contactNotes" class="form-label">Contact Notes</label>
+          <!-- prettier-ignore -->
+          <textarea class="form-control" id="contactNotes" name="contactNotes" rows="5">{{ contact.notes if contact.notes else '' }}</textarea>
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-6" style="padding-right:20px; border-right: 1px solid #ccc;">
+        <div class="mb-3">
+          <div class="d-flex justify-content-between align-items-end">
+            <label for="experience" class="form-label">Experiences</label>
+            <button
+              type="button"
+              class="btn btn-primary btn-sm"
+              data-toggle="modal"
+              name="addExperience"
+              id="addExperience">
+              <i class="fa fa-plus"></i> Add experience
+            </button>
+          </div>
+          <br />
+          {% for experience in contact.experiences %}
+          <div class="card" name="experience">
+            <h5 class="card-header">
+              <div class="float-left">
+                {{ experience.start_date.year }} - {{ 'Present' if
+                experience.current_experience else experience.end_date.year }}
+              </div>
+              <div class="form-group">
+              <button
+                id="deleteExperienceButton"
+                name="deleteExperienceButton"
+                type="submit"
+                value="{{ experience.id }}"
+                class="btn btn-danger float-right ml-1"
+                onclick="return confirm('Are you sure you want to PERMANENTLY delete {{ contact.first_name }}\'s experience as a {{ experience.job.title.name }}?');">
+                <i class="fa fa-trash"></i>
+              </button>
+              <button
+                id="editExperience"
+                type="button"
+                class="btn btn-primary float-right"
+                data-toggle="modal"
+                data-target="#editExperienceModal{{ experience.id }}">
+                <i class="fa fa-edit"></i>
+              </button>
+              </div>
+              <div
+                class="modal fade"
+                id="editExperienceModal{{ experience.id }}"
+                tabindex="-1"
+                role="dialog"
+                aria-labelledby="editExperienceModalLabel"
+                aria-hidden="true">
+                <div class="modal-dialog modal-lg" role="document">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <h5 class="modal-title" id="experienceModalLabel">
+                        Experience Details
+                      </h5>
+                      <button
+                        type="button"
+                        class="close"
+                        data-dismiss="modal"
+                        aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                      </button>
+                    </div>
+                    <div class="modal-body">
+                      <div class="form-group">
+                        <div class="card-header">
+                          <input
+                            type="month"
+                            id="editExperienceStart"
+                            name="editExperienceStart"
+                            value="{{ experience.start_date.month|format_date(experience.start_date.year) }}"
+                            max="{{ present }}"
+                            required />
+                          -
+                          <!-- prettier-ignore -->
+                          <input
+                            type="month"
+                            id="editExperienceEnd"
+                            name="editExperienceEnd"
+                            value='{{ experience.end_date.month|format_date(experience.end_date.year) }}'
+                            max="{{ present }}"
+                            {% if experience.current_experience %}
+                            style="display:none"
+                            {% endif %}
+                            required />
+                          <div class="form-check form-switch float-right">
+                            <!-- prettier-ignore -->
+                            <input
+                              class="form-check-input"
+                              type="checkbox"
+                              id="editExperienceCurrent"
+                              name="editExperienceCurrent"
+                              {% if experience.current_experience %}
+                              checked
+                              {% endif %}/>
+                            <label class="form-check-label h6" for="switch"
+                              >Current experience</label
+                            >
+                          </div>
+                        </div>
+                        <div class="card-body">
+                          <input
+                            type="text"
+                            class="form-control w-50 float-left mb-1"
+                            id="title"
+                            name="title"
+                            placeholder="Title"
+                            value="{{ experience.job.title.name}}"
+                            required />
+                          <select
+                            class="form-control w-50 float-right"
+                            id="company"
+                            name="company">
+                            <option
+                              value="{{ experience.job.institute.id }}"
+                              selected>
+                              {{ experience.job.institute.name }}
+                            </option>
+                            {% for institute in institutes %}
+                            <option value="{{ institute.id }}">
+                              {{ institute.name }}
+                            </option>
+                            {% endfor %}
+                          </select>
+                          <!-- prettier-ignore -->
+                          <textarea class="form-control" id="experienceDescription" name="experienceDescription" placeholder="Description" rows="3">{{ experience.description }}</textarea>
+                          <input
+                            type="hidden"
+                            name="experience_id"
+                            value="{{ experience.id }}" />
+                        </div>
+                      </div>
+                    </div>
+                    <div class="modal-footer">
+                      <button
+                        type="button"
+                        class="btn btn-secondary"
+                        data-dismiss="modal">
+                        Close
+                      </button>
+                      <button
+                        type="submit"
+                        class="btn btn-primary"
+                        name="saveExperience">
+                        Save experience
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </h5>
+            <div class="card-body">
+              <div class="row">
+                <div class="col-md-3">
+                  <!-- prettier-ignore -->
+                  <img
+                    {% if experience.job.institute %}
+                    src="data:image/png;base64,{{ experience.job.institute.institute_logo | encode_b64 }}"
+                    {% else %}
+                    src="static/anoninstitute.png"
+                    {% endif %}
+                    class="logo img-fluid"
+                    alt="Institute logo" />
+                </div>
+                <div class="col-md-9">
+                  <h5 class="card-title">{{ experience.job.title.name }}</h5>
+                  <p class="card-text">{{ experience.description }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <br/>
+          {% endfor %}
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="mb-3">
+          <div class="d-flex justify-content-between align-items-end">
+            <label for="education" class="form-label">Education</label>
+            <button
+              type="button"
+              class="btn btn-primary btn-sm"
+              data-toggle="modal"
+              name="addEducation"
+              id="addEducation">
+              <i class="fa fa-plus"></i> Add education
+            </button>
+          </div>
+          <br />
+          {% for education in contact.educations %}
+          <div class="card" name="education">
+            <h5 class="card-header">
+              <div class="float-left">
+                {{ education.start_date.year }} - {{ 'Present' if
+                education.current_experience else education.end_date.year }}
+              </div>
+              <div class="form-group">
+              <button
+                id="deleteEducationButton"
+                name="deleteEducationButton"
+                type="submit"
+                value="{{ education.id }}"
+                class="btn btn-danger float-right ml-1"
+                onclick="return confirm('Are you sure you want to PERMANENTLY delete {{ contact.first_name }}\'s {{ education.degree.name }} degree?');">
+                <i class="fa fa-trash"></i>
+              </button>
+              <button
+                id="editEducation"
+                name="editEducation"
+                type="button"
+                class="btn btn-primary float-right"
+                data-toggle="modal"
+                data-target="#editEducationModal{{ education.id }}">
+                <i class="fa fa-edit"></i>
+              </button>
+              </div>
+              <div
+                class="modal fade"
+                id="editEducationModal{{ education.id }}"
+                tabindex="-1"
+                role="dialog"
+                aria-labelledby="editEducationModalLabel"
+                aria-hidden="true">
+                <div class="modal-dialog modal-lg" role="document">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <h5 class="modal-title" id="educationModalLabel">
+                        Education Details
+                      </h5>
+                      <button
+                        type="button"
+                        class="close"
+                        data-dismiss="modal"
+                        aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                      </button>
+                    </div>
+                    <div class="modal-body">
+                      <div class="form-group">
+                        <div class="card-header">
+                          <input
+                            type="month"
+                            id="editEducationStart"
+                            name="editEducationStart"
+                            value="{{ education.start_date.month|format_date(education.start_date.year) }}"
+                            max="{{ present }}"
+                            required />
+                          -
+                          <!-- prettier-ignore -->
+                          <input
+                            type="month"
+                            id="editEducationEnd"
+                            name="editEducationEnd"
+                            value='{{ education.end_date.month|format_date(education.end_date.year) }}'
+                            max="{{ present }}"
+                            {% if education.current_education %}
+                            style="display:none"
+                            {% endif %}
+                            required />
+                          <div class="form-check form-switch float-right">
+                            <!-- prettier-ignore -->
+                            <input
+                              class="form-check-input"
+                              type="checkbox"
+                              id="editEducationCurrent"
+                              name="editEducationCurrent"
+                              {% if education.current_education %}
+                              checked
+                              {% endif %}/>
+                            <label class="form-check-label h6" for="switch"
+                              >Current education</label
+                            >
+                          </div>
+                        </div>
+                        <div class="card-body">
+                          <input
+                            type="text"
+                            class="form-control w-25 float-left mb-1"
+                            id="degree"
+                            name="degree"
+                            placeholder="Degree"
+                            value="{{ education.degree.name}}"
+                            required />
+                          <input
+                            type="text"
+                            class="form-control w-25 float-left mb-1"
+                            id="field"
+                            name="field"
+                            placeholder="Field"
+                            value="{{ education.degree.field}}"
+                            required />
+                          <select
+                            class="form-control w-50 float-right"
+                            id="school"
+                            name="school">
+                            <option
+                              value="{{ education.institute.id }}"
+                              selected>
+                              {{ education.institute.name }}
+                            </option>
+                            {% for institute in institutes if institute.industry == "Education" %}
+                            <option value="{{ institute.id }}">
+                              {{ institute.name }}
+                            </option>
+                            {% endfor %}
+                          </select>
+                          <!-- prettier-ignore -->
+                          <textarea class="form-control" id="educationDescription" name="educationDescription" placeholder="Description" rows="3">{{ education.description }}</textarea>
+                          <input
+                            type="hidden"
+                            name="education_id"
+                            id="education_id"
+                            value="{{ education.id }}" />
+                        </div>
+                      </div>
+                    </div>
+                    <div class="modal-footer">
+                      <button
+                        type="button"
+                        class="btn btn-secondary"
+                        data-dismiss="modal">
+                        Close
+                      </button>
+                      <button
+                        type="submit"
+                        class="btn btn-primary"
+                        name="saveEducation">
+                        Save education
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </h5>
+            <div class="card-body">
+              <div class="row">
+                <div class="col-md-3">
+                  <!-- prettier-ignore -->
+                  <img
+                    {% if education.institute %}
+                    src="data:image/png;base64,{{ education.institute.institute_logo | encode_b64 }}"
+                    {% else %}
+                    src="static/anoninstitute.png"
+                    {% endif %}
+                    class="logo img-fluid"
+                    alt="Institute logo" />
+                </div>
+                <div class="col-md-9">
+                  <h5 class="card-title">{{ education.degree.name }}, {{ education.degree.field }}</h5>
+                  <p class="card-text">{{ education.description }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <br/>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </form>
+</div>
+<div
+  class="modal fade"
+  id="newExperienceModal"
+  tabindex="-1"
+  role="dialog"
+  aria-labelledby="newExperienceModalLabel"
+  aria-hidden="true">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="newExperienceModalLabel">
+          Experience Details
+        </h5>
+        <button
+          type="button"
+          class="close"
+          data-dismiss="modal"
+          aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <form method="POST">
+        <div class="modal-body">
+          <div class="form-group">
+            <div class="card-header">
+              <input
+                type="month"
+                id="newExperienceStart"
+                name="newExperienceStart"
+                min="1900-01"
+                max="{{ present }}"
+                required />
+              -
+              <input
+                type="month"
+                id="newExperienceEnd"
+                name="newExperienceEnd"
+                min="1900-01"
+                max="{{ present }}"
+                required />
+              <div class="form-check form-switch float-right">
+                <input
+                  class="form-check-input"
+                  type="checkbox"
+                  id="newExperienceCurrent"
+                  name="newExperienceCurrent" />
+                <label class="form-check-label h6" for="switch"
+                  >Current experience</label
+                >
+              </div>
+            </div>
+            <div class="card-body">
+              <input
+                type="text"
+                class="form-control w-50 float-left mb-1"
+                id="title"
+                name="title"
+                placeholder="Title"
+                required />
+              <select
+                class="form-control w-50 float-right"
+                id="company"
+                name="company">
+                <option value="" selected>Company</option>
+                {% for institute in institutes %}
+                <option value="{{ institute.id }}">{{ institute.name }}</option>
+                {% endfor %}
+              </select>
+              <textarea
+                class="form-control"
+                id="experienceDescription"
+                name="experienceDescription"
+                placeholder="Description"
+                rows="3"></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">
+            Close
+          </button>
+          <button
+            type="submit"
+            class="btn btn-primary"
+            name="addTheExperience"
+            id="addTheExperience"/>
+            Add experience
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+<div
+  class="modal fade"
+  id="newEducationModal"
+  tabindex="-1"
+  role="dialog"
+  aria-labelledby="newEducationModalLabel"
+  aria-hidden="true">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="newEducationModalLabel">
+          Education Details
+        </h5>
+        <button
+          type="button"
+          class="close"
+          data-dismiss="modal"
+          aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <form method="POST">
+        <div class="modal-body">
+          <div class="form-group">
+            <div class="card-header">
+              <input
+                type="month"
+                id="newEducationStart"
+                name="newEducationStart"
+                min="1900-01"
+                max="{{ present }}"
+                required />
+              -
+              <input
+                type="month"
+                id="newEducationEnd"
+                name="newEducationEnd"
+                min="1900-01"
+                max="{{ present }}"
+                required />
+              <div class="form-check form-switch float-right">
+                <input
+                  class="form-check-input"
+                  type="checkbox"
+                  id="newEducationCurrent"
+                  name="newEducationCurrent" />
+                <label class="form-check-label h6" for="switch"
+                  >Current education</label
+                >
+              </div>
+            </div>
+            <div class="card-body">
+              <input
+                type="text"
+                class="form-control w-25 float-left mb-1"
+                id="degree"
+                name="degree"
+                placeholder="Degree"
+                required />
+              <input
+                type="text"
+                class="form-control w-25 float-left mb-1"
+                id="field"
+                name="field"
+                placeholder="Field"
+                required />
+              <select
+                class="form-control w-50 float-right"
+                id="school"
+                name="school">
+                <option value="" selected>School</option>
+                {% for institute in institutes if institute.industry == "Education" %}
+                <option value="{{ institute.id }}">{{ institute.name }}</option>
+                {% endfor %}
+              </select>
+              <textarea
+                class="form-control"
+                id="educationDescription"
+                name="educationDescription"
+                placeholder="Description"
+                rows="3"></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">
+            Close
+          </button>
+          <button
+            type="submit"
+            class="btn btn-primary"
+            name="addTheEducation"
+            id="addTheEducation"/>
+            Add education
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+<script>
+  let basicDetails = document.querySelector("#basicDetails");
+  let changesMade = false;
+  let ignoreLoss = false;
+
+  basicDetails.oninput = () => {
+    changesMade = true;
+  };
+
+  document.getElementById("addExperience").onclick = function (event) {
+    if (changesMade) {
+      if (
+        confirm(
+          "Your unsaved changes will be lost when adding experiences. Proceed?"
+        )
+      ) {
+        $("#newExperienceModal").modal("show");
+      }
+    } else {
+      $("#newExperienceModal").modal("show");
+    }
+  };
+
+  document.getElementById("addEducation").onclick = function (event) {
+    if (changesMade) {
+      if (
+        confirm(
+          "Your unsaved changes will be lost when adding educations. Proceed?"
+        )
+      ) {
+        $("#newEducationModal").modal("show");
+      }
+    } else {
+      $("#newEducationModal").modal("show");
+    }
+  };
+
+
+  const checkbox1 = document.getElementById("editExperienceCurrent");
+  const end1 = document.getElementById("editExperienceEnd");
+
+  checkbox1.addEventListener("click", function handleClick1() {
+    if (checkbox1.checked) {
+      end1.style.display = "none";
+      end1.value = "{{ present }}";
+    } else {
+      end1.value = "";
+      end1.style.display = "inline-block";
+    }
+  });
+  
+  const checkbox2 = document.getElementById("newExperienceCurrent");
+  const end2 = document.getElementById("newExperienceEnd");
+
+  checkbox2.addEventListener("click", function handleClick2() {
+    if (checkbox2.checked) {
+      end2.style.display = "none";
+      end2.value = "{{ present }}";
+    } else {
+      end2.value = "";
+      end2.style.display = "inline-block";
+    }
+  });
+
+  const checkbox3 = document.getElementById("editEducationCurrent");
+  const end3 = document.getElementById("editEducationEnd");
+
+  checkbox3.addEventListener("click", function handleClick3() {
+    if (checkbox2.checked) {
+      end3.style.display = "none";
+      end3.value = "{{ present }}";
+    } else {
+      end3.style.display = "inline-block";
+      end3.value = "";
+    }
+  });
+
+  const checkbox4 = document.getElementById("newEducationCurrent");
+  const end4 = document.getElementById("newEducationEnd");
+
+  checkbox4.addEventListener("click", function handleClick4() {
+    if (checkbox4.checked) {
+      end4.style.display = "none";
+      end4.value = "{{ present }}";
+    } else {
+      end4.style.display = "inline-block";
+      end4.value = "";
+    }
+  });
+
+  window.addEventListener("beforeunload", function (e) {
+    if (changesMade) {
+      e.preventDefault();
+      e.returnValue = "";
+    }
+  });
+
+</script>
+{% endblock %}
